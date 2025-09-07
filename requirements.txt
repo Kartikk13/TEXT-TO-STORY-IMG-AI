@@ -1,0 +1,10 @@
+# Core
+streamlit
+requests
+Pillow
+reportlab
+
+# AI models
+torch
+transformers
+diffusers
