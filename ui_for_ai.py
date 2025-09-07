@@ -97,3 +97,33 @@ if scenes:
                     st.info("No image yet. Click Generate Image above.")
 
     st.divider()
+
+
+    if st.button("🧾 Export PDF"):
+        serializable_scenes = []
+        for sc in scenes:
+            img_b64 = None
+            if "image_bytes" in sc and sc["image_bytes"]:
+                img_b64 = base64.b64encode(sc["image_bytes"]).decode("utf-8")
+                serializable_scenes.append({
+                "index": sc["index"],
+                "title": sc["title"],
+                "text": sc["text"],
+                "image_prompt": sc["image_prompt"],
+                "image_bytes": img_b64
+            })
+
+        pdf_response = requests.post(f"{API_URL}/export_pdf", json={"scenes": serializable_scenes})
+
+        if pdf_response.status_code == 200:
+            st.download_button(
+                "📥 Download Story PDF",
+                data=pdf_response.content,
+                file_name="story.pdf",
+                mime="application/pdf"
+            )
+        else:
+            st.error("Failed to generate PDF")
+
+else:
+    st.info("Add a story idea and click Generate Story to begin.")
