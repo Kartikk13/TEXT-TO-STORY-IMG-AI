@@ -4,13 +4,13 @@ import io
 from PIL import Image
 import base64
 
-API_URL = "http://127.0.0.1:8000"
+API_URL = "http://127.0.0.1:8000"               #url to be used locally
 
-st.set_page_config(page_title="Fast Text-to-Image Story Generator", layout="wide")
+st.set_page_config(page_title="Fast Text-to-Image Story Generator", layout="wide")          #page configuration
 st.title("📖 Fast Story Generator with AI Images")
 
 
-with st.sidebar:
+with st.sidebar:                                #sidebar create
     st.header("Settings")
     idea = st.text_area("Story idea", placeholder="A young girl finds a secret door in her grandmother's attic.", height=120)
     colA, colB = st.columns(2)
@@ -37,7 +37,7 @@ def fetch_scenes():
         "n_scenes": n_scenes,
         "art_style": art_style
     }
-    res = requests.post(f"{API_URL}/generate_scenes", json=payload)
+    res = requests.post(f"{API_URL}/generate_scenes", json=payload)         #requesting img from backend
     if res.status_code == 200:
         return res.json().get("scenes", [])
     else:
@@ -63,7 +63,7 @@ scenes = st.session_state["scenes"]
 if scenes:
     st.subheader("Your Illustrated Story")
 
-    if st.button("🖼 Generate All Images"):
+    if st.button("🖼 Generate All Images"):             #generate img button
         progress_text = st.empty()
         progress_bar = st.progress(0)
         total = len(scenes)
@@ -84,7 +84,7 @@ if scenes:
             st.write(sc['text'])
             cols = st.columns([3, 2])
             with cols[0]:
-                st.caption("Editable image prompt")
+                st.caption("Editable image prompt")                     #img prompt edit
                 new_prompt = st.text_area(f"prompt_{idx}", value=sc["image_prompt"], height=100, label_visibility="collapsed")
                 if new_prompt != sc["image_prompt"]:
                     sc["image_prompt"] = new_prompt
@@ -99,7 +99,7 @@ if scenes:
     st.divider()
 
 
-    if st.button("🧾 Export PDF"):
+    if st.button("🧾 Export PDF"):              #export pdf button
         serializable_scenes = []
         for sc in scenes:
             img_b64 = None
@@ -115,7 +115,7 @@ if scenes:
 
         pdf_response = requests.post(f"{API_URL}/export_pdf", json={"scenes": serializable_scenes})
 
-        if pdf_response.status_code == 200:
+        if pdf_response.status_code == 200:             #download pdf button
             st.download_button(
                 "📥 Download Story PDF",
                 data=pdf_response.content,
