@@ -43,3 +43,15 @@ def fetch_scenes():
     else:
         st.error("Error connecting to backend")
         return []
+    
+
+def generate_image(scene_index):
+    scene = st.session_state["scenes"][scene_index]
+    res = requests.post(f"{API_URL}/generate_image", json={"prompt": scene["image_prompt"]})
+    if res.status_code == 200:
+        scene["image_bytes"] = res.content
+    else:
+        st.error("Failed to generate image")
+
+if go and idea.strip():
+    st.session_state["scenes"] = fetch_scenes()
