@@ -43,3 +43,25 @@ def generate_scenes_locally(idea, genre, tone, audience, n_scenes) -> List[Scene
         image_prompt = f"{genre} {tone} illustration of {idea.lower()} — scene '{t}'. Wide shot, cinematic lighting"
         scenes.append(Scene(i, t, paragraph, image_prompt))
     return scenes
+
+
+
+pipe = None
+def load_sd_pipeline():
+    global pipe
+    if pipe is None:
+        model_id = "stabilityai/sd-turbo"
+        pipe = StableDiffusionPipeline.from_pretrained(model_id, torch_dtype=torch.float32)
+        pipe = pipe.to("cuda" if torch.cuda.is_available() else "cpu")
+    return pipe
+
+def generate_image_fast(image_prompt: str) -> Optional[bytes]:
+    try:
+        pipe = load_sd_pipeline()
+        image = pipe(image_prompt, height=256, width=256).images[0]
+        buf = io.BytesIO()
+        image.save(buf, format="PNG")
+        return buf.getvalue()
+    except Exception as e:
+        print("Image generation error:", e)
+        return None
