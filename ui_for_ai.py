@@ -22,3 +22,24 @@ with st.sidebar:
         n_scenes = st.slider("# of scenes", 3, 5, value=3)
     art_style = st.selectbox("Art style", ["cartoon", "anime", "realistic", "3D render"], 0)
     go = st.button("✨ Generate Story")
+
+
+
+if "scenes" not in st.session_state:
+    st.session_state["scenes"] = []
+
+def fetch_scenes():
+    payload = {
+        "idea": idea.strip(),
+        "genre": genre,
+        "tone": tone,
+        "audience": audience,
+        "n_scenes": n_scenes,
+        "art_style": art_style
+    }
+    res = requests.post(f"{API_URL}/generate_scenes", json=payload)
+    if res.status_code == 200:
+        return res.json().get("scenes", [])
+    else:
+        st.error("Error connecting to backend")
+        return []
