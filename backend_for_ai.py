@@ -104,3 +104,59 @@ def export_pdf(scenes: List[Scene]) -> Optional[bytes]:
     c.save()
     buf.seek(0)
     return buf.read()
+
+
+
+app = FastAPI()
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+@app.get("/")
+def root():
+    return {"message": "Backend is running successfully 🚀"}
+
+@app.post("/generate_scenes")
+def api_generate_scenes(payload: dict):
+    idea = payload["idea"]
+    genre = payload["genre"]
+    tone = payload["tone"]
+    audience = payload["audience"]
+    n_scenes = payload["n_scenes"]
+    art_style = payload.get("art_style", "cartoon")
+    scenes = generate_scenes_locally(idea, genre, tone, audience, n_scenes)
+    # Apply art style to prompt
+    for sc in scenes:
+        sc.image_prompt = sc.image_prompt.rstrip(".") + f", style: {art_style}, high detail, cinematic lighting"
+    return {"scenes": [sc.to_dict() for sc in scenes]}
+
+@app.post("/generate_image")
+def api_generate_image(payload: dict):
+    prompt = payload["prompt"]
+    image_bytes = generate_image_fast(prompt)
+    if image_bytes:
+        return StreamingResponse(io.BytesIO(image_bytes), media_type="image/png")
+    return {"error": "Image generation failed"}
+
+@app.post("/export_pdf")
+def api_export_pdf(payload: dict):
+    scenes_list = []
+    for s in payload["scenes"]:
+        img_bytes = None
+        if s.get("image_bytes"):
+            img_bytes = base64.b64decode(s["image_bytes"])
+        scenes_list.append(
+            Scene(
+                index=s["index"],
+                title=s["title"],
+                text=s["text"],
+                image_prompt=s["image_prompt"],
+                image_bytes=img_bytes
+            )
+        )
+    pdf_bytes = export_pdf(scenes_list)
+    return StreamingResponse(io.BytesIO(pdf_bytes), media_type="application/pdf")
