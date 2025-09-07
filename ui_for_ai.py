@@ -55,3 +55,45 @@ def generate_image(scene_index):
 
 if go and idea.strip():
     st.session_state["scenes"] = fetch_scenes()
+
+
+
+scenes = st.session_state["scenes"]
+
+if scenes:
+    st.subheader("Your Illustrated Story")
+
+    if st.button("🖼 Generate All Images"):
+        progress_text = st.empty()
+        progress_bar = st.progress(0)
+        total = len(scenes)
+        for idx, sc in enumerate(scenes):
+            progress_text.text(f"Generating image {idx+1}/{total}: {sc['title']}")
+            try:
+                res = requests.post(f"{API_URL}/generate_image", json={"prompt": sc["image_prompt"]})
+                sc["image_bytes"] = res.content
+            except:
+                sc["image_bytes"] = None
+            progress_bar.progress((idx + 1) / total)
+        progress_text.text("All images generated! ✅")
+        st.success("All images generated!")
+
+    for idx, sc in enumerate(scenes):
+        with st.container():
+            st.markdown(f"### Scene {sc['index']}: {sc['title']}")
+            st.write(sc['text'])
+            cols = st.columns([3, 2])
+            with cols[0]:
+                st.caption("Editable image prompt")
+                new_prompt = st.text_area(f"prompt_{idx}", value=sc["image_prompt"], height=100, label_visibility="collapsed")
+                if new_prompt != sc["image_prompt"]:
+                    sc["image_prompt"] = new_prompt
+                if st.button("🖼 Generate image", key=f"img_{idx}"):
+                    generate_image(idx)
+            with cols[1]:
+                if "image_bytes" in sc and sc["image_bytes"]:
+                    st.image(io.BytesIO(sc["image_bytes"]), caption=f"Scene {sc['index']} — Illustration")
+                else:
+                    st.info("No image yet. Click Generate Image above.")
+
+    st.divider()
